@@ -372,10 +372,35 @@ async function loadChart(keep){
   if(lastErrKey==="errc")$("msg").textContent="";
   draw();
 }
-function buildT(j){
-  const ok=j.tickers.filter(x=>!x.is_anomaly&&!x.is_stale&&x.converted_volume?.usd>0);
-  const total=ok.reduce((s,x)=>s+x.converted_volume.usd,0);
-  return ok.slice(0,15).map(x=>({ex:x.market.name,logo:x.market.logo,pair:x.base+"/"+x.target,price:x.converted_last.usd,vol:x.converted_volume.usd,share:x.converted_volume.usd/total*100,url:x.trade_url}));
+/* 7 ตลาดที่ต้องมี พร้อมลิงก์ตรงไปหน้าเทรดคู่เหรียญนั้น (ไม่ใช้ลิงก์จาก CoinGecko ที่อาจเก่า/มีรหัสแนะนำ) */
+const nm=(m,re,ids)=>m&&(ids.includes(m.identifier)||re.test((m.name||"").trim()));
+const EXS=[
+  {k:"safetrade",ex:"SafeTrade",m:m=>nm(m,/^safe\s?trade$/i,["safe_trade","safe-trade","safetrade"]),u:(b,t)=>`https://safetrade.com/exchange/${b}-${t}`},
+  {k:"mexc",ex:"MEXC",m:m=>nm(m,/^mexc(\s?global)?$/i,["mxc","mexc"]),u:(b,t)=>`https://www.mexc.com/exchange/${b}_${t}`},
+  {k:"gate",ex:"Gate",m:m=>nm(m,/^gate(\.io|\.com)?$/i,["gate"]),u:(b,t)=>`https://www.gate.com/trade/${b}_${t}`},
+  {k:"lbank",ex:"LBank",m:m=>nm(m,/^lbank$/i,["lbank"]),u:(b,t)=>`https://www.lbank.com/trade/${b.toLowerCase()}_${t.toLowerCase()}`}
+];
+const PIN={"qubic-network":"QUBIC",bitcoin:"BTC"};
+function buildT(j,id){
+  const b=PIN[id],all=j.tickers;
+  const total=all.filter(x=>!x.is_anomaly&&!x.is_stale).reduce((s,x)=>s+(x.converted_volume?.usd||0),0)||1;
+  const rows=EXS.map(E=>{
+    const c=all.filter(x=>E.m(x.market)&&x.base===b);
+    const x=c.find(x=>x.target==="USDT"&&!x.is_stale)||c.find(x=>x.target==="USDT")||c[0];
+    if(!x)return{ex:E.ex,logo:null,pair:b+"/USDT",price:null,vol:null,share:null,url:E.u(b,"USDT")};
+    const v=x.converted_volume?.usd??null;
+    return{ex:E.ex,logo:x.market.logo,pair:x.base+"/"+x.target,price:x.converted_last?.usd??null,vol:v,share:v?v/total*100:null,url:E.u(x.base,x.target)};
+  });
+  /* เติมอีก 3 ตลาดที่ CoinGecko ยืนยันว่ามีการซื้อขายเหรียญนี้จริง (ปริมาณสูงสุด) ใช้ลิงก์คู่เทรดจากข้อมูลจริง */
+  const seen=new Set();
+  all.filter(x=>x.base===b&&!x.is_anomaly&&!x.is_stale&&x.converted_volume?.usd>0&&x.trade_url&&!EXS.some(E=>E.m(x.market))&&!/futures|perp|swap|margin/i.test((x.market.name||"")+(x.market.identifier||"")))
+    .sort((p,q)=>q.converted_volume.usd-p.converted_volume.usd)
+    .forEach(x=>{
+      if(seen.size>=3||seen.has(x.market.identifier))return;
+      seen.add(x.market.identifier);const v=x.converted_volume.usd;
+      rows.push({ex:x.market.name,logo:x.market.logo,pair:x.base+"/"+x.target,price:x.converted_last?.usd??null,vol:v,share:v/total*100,url:x.trade_url});
+    });
+  return rows.sort((a,b)=>(b.vol??-1)-(a.vol??-1));
 }
 async function loadMarketsTable(){
   const c=COINS[sel],id=c.id;
@@ -383,8 +408,8 @@ async function loadMarketsTable(){
   if(cached&&Date.now()-cached.t<120000){renderTable();return}
   $("mkBody").innerHTML=`<tr><td colspan="7" class="na">${t("load")}</td></tr>`;
   try{
-    const j=await cg(`/coins/${id}/tickers?include_exchange_logo=true&order=volume_desc`,120000,v=>{if(!tick[id]){tick[id]={t:0,rows:buildT(v)};if(id===COINS[sel].id)renderTable()}});
-    tick[id]={t:Date.now(),rows:buildT(j)};
+    const j=await cg(`/coins/${id}/tickers?include_exchange_logo=true&order=volume_desc`,120000,v=>{if(!tick[id]){tick[id]={t:0,rows:buildT(v,id)};if(id===COINS[sel].id)renderTable()}});
+    tick[id]={t:Date.now(),rows:buildT(j,id)};
     if(lastErrKey==="errm")$("msg").textContent="";
     if(id===COINS[sel].id)renderTable();
   }catch(e){$("mkBody").innerHTML="";err("errm",e)}
@@ -393,7 +418,7 @@ function renderTable(){
   const rows=tick[COINS[sel].id]?.rows||[];
   $("mkBody").innerHTML=rows.map((x,i)=>`<tr><td>${i+1}</td>
     <td><span class="ex">${x.logo?`<img src="${x.logo}" alt="" onerror="this.style.display='none'">`:""}${x.ex}</span></td>
-    <td>${x.pair}</td><td>${fmtP(x.price,"$")}</td><td>${fmtBig2(x.vol)}</td><td>${x.share.toFixed(2)}%</td>
+    <td>${x.pair}</td><td>${fmtP(x.price,"$")}</td><td>${fmtBig2(x.vol)}</td><td>${x.share==null?"—":x.share.toFixed(2)+"%"}</td>
     <td>${x.url?`<a class="go" href="${x.url}" target="_blank" rel="noopener noreferrer">${t("trade")}</a>`:'<span class="na">—</span>'}</td></tr>`).join("");
 }
 function fmtBig2(v){const s=cur;cur="usd";const r=fmtBig(v);cur=s;return r}
