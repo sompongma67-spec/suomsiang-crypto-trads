@@ -113,6 +113,20 @@ body.noscroll{overflow:hidden}
 .sw{display:flex;flex-wrap:wrap;gap:8px}
 .sw button{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);cursor:pointer;padding:0}
 .sw button:hover{border-color:var(--focus)}
+.leftcol{display:flex;flex-direction:column;gap:12px;min-width:0}
+.xbox{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;width:100%;max-width:520px}
+.thumb{position:relative;width:100%;aspect-ratio:1200/630;overflow:hidden;border-radius:8px;border:1px solid var(--line);background:#000}
+.thumb iframe{position:absolute;left:0;top:0;width:1000px;height:750px;border:0;transform-origin:0 0;pointer-events:none;background:#000}
+.thumb a.ov{display:block}
+.thumb .ov{position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent;cursor:pointer}
+.xbox.full{position:fixed;inset:0;z-index:1000;max-width:none;border-radius:0;background:var(--bg)}
+.xbox.full .thumb{flex:1;aspect-ratio:auto;border-radius:12px}
+.xbox.full .thumb iframe{width:100%;height:100%;transform:none!important;pointer-events:auto}
+.xbox.full .ov{display:none}
+.thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+.xbox.full .thumb img{object-fit:contain}
+.thumb .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Chakra Petch',sans-serif;font-size:22px;letter-spacing:.08em;color:#6fd3e6;background:linear-gradient(135deg,#0b0f1a,#1a1033)}
+.xbox.full .thumb .ph{display:none}
 footer{text-align:center;color:var(--mute);font-size:12px;padding:20px}
 </style>
 </head>
@@ -144,7 +158,14 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:20px}
 </aside>
 <div class="center">
 <main>
+  <div class="leftcol">
   <section class="coins" id="coins"></section>
+  <div class="xbox" id="bpp">
+    <div class="adbar"><span>Qubic Church</span><span><a href="https://qubic.church/bpp9000/terminal" target="_blank" rel="noopener noreferrer" data-t="adOpen"></a><button id="bppLive" hidden></button><button id="bppFull" data-t="adFull"></button><button id="bppClose" data-t="adClose" hidden></button></span></div>
+    <div class="thumb"><div class="ph">QUBIC CHURCH</div><img id="bppImg" src="https://qubic.church/og/terminal.png?t=2992046" alt="Qubic Church" referrerpolicy="no-referrer" onerror="this.hidden=true;this.dataset.bad=1"><iframe id="bppf" data-src="https://qubic.church/bpp9000/terminal" title="Qubic Church" hidden></iframe><a class="ov" id="bppOv" href="https://qubic.church/bpp9000/terminal" target="_blank" rel="noopener noreferrer" aria-label="Open Qubic Church"></a></div>
+    <div class="name hint" data-t="bppHint"></div>
+  </div>
+  </div>
   <section class="panel">
     <div class="ctop">
       <div><div class="name" id="cn"></div><div class="big" id="cp"></div></div>
@@ -207,6 +228,8 @@ Object.assign(T.th,{fdv:"มูลค่าเต็ม (FDV)",vmc:"ปริม
 Object.assign(T.en,{fdv:"FDV",vmc:"Vol / Mkt cap",ath:"All-time high",atl:"All-time low",tsup:"Total supply",msup:"Max supply",web:"Website",expl:"Explorer"});
 Object.assign(T.th,{bgBtn:"🎨 พื้นหลัง",bgColor:"สีพื้นหลัง",bgGrad:"ไล่สี (สีที่ 2)",bgAlpha:"ความโปร่งใสของกล่อง",bgReset:"รีเซ็ตสี"});
 Object.assign(T.en,{bgBtn:"🎨 Background",bgColor:"Background color",bgGrad:"Gradient (2nd color)",bgAlpha:"Box transparency",bgReset:"Reset colors"});
+Object.assign(T.th,{bppHint:"คลิกที่ภาพเพื่อเปิดหน้าเว็บ (แท็บใหม่) ใช้งานได้เต็มรูปแบบ"});
+Object.assign(T.en,{bppHint:"Click the picture to open the live website (new tab)"});
 Object.assign(T.th,{pTitle:"เครื่องเล่น MP3 / MP4",pAdd:"+ เพิ่มไฟล์",pClear:"ล้างทั้งหมด",pEmpty:"ยังไม่มีเพลง กด + เพิ่มไฟล์ หรือลากไฟล์มาวางที่นี่",pLimit:"รองรับสูงสุด 1,000 รายการ",pNone:"ยังไม่ได้เลือกเพลง",pDel:"ลบ",pFail:"บันทึกลงเบราว์เซอร์ไม่ได้ (พื้นที่เต็มหรือไม่รองรับ) ไฟล์จะอยู่แค่ในหน้านี้",pConfirm:"ลบเพลงทั้งหมดในรายการ?",adTitle:"โฆษณา",adOpen:"↗ แท็บใหม่",adFull:"⤢ ขยาย",adClose:"✕ ปิด",zoomHint:"เลื่อนล้อเมาส์เพื่อซูม · ลากเพื่อเลื่อนดู · ดับเบิลคลิกเพื่อรีเซ็ต"});
 Object.assign(T.en,{pTitle:"MP3 / MP4 Player",pAdd:"+ Add files",pClear:"Clear all",pEmpty:"No tracks yet. Click + Add files or drop files here.",pLimit:"Limit is 1,000 items",pNone:"No track selected",pDel:"Remove",pFail:"Could not save to the browser (storage full or unsupported). Files stay in this page only.",pConfirm:"Remove all tracks from the list?",adTitle:"Advertisement",adOpen:"↗ New tab",adFull:"⤢ Expand",adClose:"✕ Close",zoomHint:"Mouse wheel to zoom · drag to pan · double-click to reset"});
 const LINKS={BTC:[["web","https://bitcoin.org"],["expl","https://mempool.space"]],QUBIC:[["web","https://qubic.org"],["expl","https://explorer.qubic.org"]]};
@@ -297,6 +320,7 @@ function applyStatic(){
   [...$("typ").children].forEach(b=>b.classList.toggle("a",b.dataset.v===ctype));
   $("foot").textContent=t("foot");
   applyBg();
+  try{updBpp()}catch(e){}
 }
 function render(){
   $("coins").innerHTML=COINS.map((c,i)=>{
@@ -666,6 +690,24 @@ viz();
   renderPL();
 })();
 renderPL();
+
+/* ===== กรอบ BPP-9000 Terminal: ภาพตัวอย่าง คลิกขยายเต็มจอ (โหลดหน้าสดในกรอบได้ถ้าเว็บนั้นอนุญาต) ===== */
+const bpp=$("bpp"),bppF=$("bppf"),bppI=$("bppImg");let bppLive=false;
+function updBpp(){$("bppLive").textContent=bppLive?(lang==="th"?"🖼 ดูภาพนิ่ง":"🖼 Show image"):(lang==="th"?"▶ โหลดหน้าสด":"▶ Load live page")}
+function showLive(on){
+  bppLive=on;
+  if(on&&!bppF.getAttribute("src"))bppF.src=bppF.dataset.src;
+  bppF.hidden=!on;bppI.hidden=on||bppI.dataset.bad==="1";updBpp();
+}
+function setBpp(on){
+  bpp.classList.toggle("full",on);document.body.classList.toggle("noscroll",on);
+  $("bppClose").hidden=!on;$("bppFull").hidden=on;$("bppLive").hidden=!on;
+  showLive(on);
+}
+$("bppFull").onclick=()=>setBpp(true);$("bppClose").onclick=()=>setBpp(false);
+$("bppLive").onclick=()=>showLive(!bppLive);
+addEventListener("keydown",e=>{if(e.key==="Escape"&&bpp.classList.contains("full"))setBpp(false)});
+updBpp();
 </script>
 </body>
 </html>
